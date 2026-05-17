@@ -28,7 +28,19 @@ def clean_bike_counter_data(df: pd.DataFrame) -> pd.DataFrame:
     # Remove rows without valid timestamp
     df = df.dropna(subset=["timestamp"])
 
-    # Normalize station column names
+    # Clean station column names
+    cleaned_columns = {}
+
+    for col in df.columns:
+        if col == "timestamp":
+            cleaned_columns[col] = col
+        else:
+            # Excel headers contain station ID plus extra metadata on a new line.
+            # Keep only the first line, which is the real station ID.
+            cleaned_columns[col] = str(col).split("\n")[0].strip()
+
+    df = df.rename(columns=cleaned_columns)
+
     station_columns = [col for col in df.columns if col != "timestamp"]
     df[station_columns] = df[station_columns].apply(pd.to_numeric, errors="coerce")
 
