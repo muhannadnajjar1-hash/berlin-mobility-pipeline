@@ -220,3 +220,4 @@ data/
 .virtual_documents/
 anaconda_projects/
 data/
+.DS_Store
