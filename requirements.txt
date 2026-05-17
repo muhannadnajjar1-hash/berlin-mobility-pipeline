@@ -3,3 +3,4 @@ openpyxl
 pyyaml
 q
 
+pytest
