@@ -1,5 +1,22 @@
 from pathlib import Path
 import logging
+import yaml
+
+
+def load_config(config_path: str) -> dict:
+    """
+    Load pipeline configuration from a YAML file.
+    """
+    path = Path(config_path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"Config file not found: {path}")
+
+    with open(path, "r") as file:
+        config = yaml.safe_load(file)
+
+    logging.info("Loaded config from %s", path)
+    return config
 
 
 def get_raw_file_path(raw_file_path: str) -> Path:

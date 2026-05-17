@@ -1,6 +1,6 @@
 import logging
 
-from ingest import get_raw_file_path
+from ingest import load_config, get_raw_file_path
 from transform import (
     load_bike_counter_sheet,
     clean_bike_counter_data,
@@ -9,26 +9,34 @@ from transform import (
 from load import save_processed_data
 
 
-RAW_FILE_PATH = "data/raw/bike_counts.xlsx"
-SHEET_NAME = "Jahresdatei 2025"
-OUTPUT_PATH = "data/processed/bike_counts_2025_clean.csv"
+CONFIG_PATH = "config/config.yaml"
 
 
 def main():
+    config = load_config(CONFIG_PATH)
+
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, config["logging"]["level"]),
         format="%(asctime)s %(levelname)s %(message)s",
+	force=True,
     )
 
     logging.info("Starting Berlin bike counter ETL pipeline")
 
-    raw_file_path = get_raw_file_path(RAW_FILE_PATH)
+    raw_file_path = get_raw_file_path(config["dataset"]["raw_file_path"])
 
-    raw_df = load_bike_counter_sheet(raw_file_path, SHEET_NAME)
+    raw_df = load_bike_counter_sheet(
+        raw_file_path,
+        config["dataset"]["sheet_name"],
+    )
+
     clean_df = clean_bike_counter_data(raw_df)
     long_df = reshape_to_long_format(clean_df)
 
-    save_processed_data(long_df, OUTPUT_PATH)
+    save_processed_data(
+        long_df,
+        config["output"]["processed_path"],
+    )
 
     logging.info("ETL pipeline finished successfully")
     logging.info("Final rows: %s", len(long_df))

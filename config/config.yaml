@@ -1,0 +1,9 @@
+dataset:
+  raw_file_path: "data/raw/bike_counts.xlsx"
+  sheet_name: "Jahresdatei 2025"
+
+output:
+  processed_path: "data/processed/bike_counts_2025_clean.csv"
+
+logging:
+  level: "INFO"
