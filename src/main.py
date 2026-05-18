@@ -7,7 +7,7 @@ from transform import (
     clean_bike_counter_data,
     reshape_to_long_format,
 )
-from load import save_processed_data
+from load import save_processed_csv, save_processed_parquet
 
 
 CONFIG_PATH = "config/config.yaml"
@@ -19,7 +19,7 @@ def main():
     logging.basicConfig(
         level=getattr(logging, config["logging"]["level"]),
         format="%(asctime)s %(levelname)s %(message)s",
-    force=True,
+        force=True,
     )
 
     logging.info("Starting Berlin bike counter ETL pipeline")
@@ -33,11 +33,17 @@ def main():
 
     clean_df = clean_bike_counter_data(raw_df)
     long_df = reshape_to_long_format(clean_df)
-    validate_processed_data (long_df)
 
-    save_processed_data(
+    validate_processed_data(long_df)
+
+    save_processed_csv(
         long_df,
-        config["output"]["processed_path"],
+        config["output"]["processed_csv_path"],
+    )
+
+    save_processed_parquet(
+        long_df,
+        config["output"]["processed_parquet_path"],
     )
 
     logging.info("ETL pipeline finished successfully")

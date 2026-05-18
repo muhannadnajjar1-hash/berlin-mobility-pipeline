@@ -3,7 +3,8 @@ dataset:
   sheet_name: "Jahresdatei 2025"
 
 output:
-  processed_path: "data/processed/bike_counts_2025_clean.csv"
+  processed_csv_path: "data/processed/bike_counts_2025_clean.csv"
+  processed_parquet_path: "data/processed/bike_counts_2025_clean.parquet"
 
 logging:
   level: "INFO"
