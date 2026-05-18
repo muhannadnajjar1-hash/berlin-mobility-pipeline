@@ -1,28 +1,241 @@
 # Berlin Mobility Pipeline
 
-A data engineering portfolio project that builds a local ETL pipeline for Berlin bike counter data.
+Ein Data-Engineering-Portfolio-Projekt, das eine lokale ETL-Pipeline für Berliner Fahrradzähldaten aufbaut.
 
-The pipeline loads raw Berlin Open Data from an Excel file, cleans and reshapes the data, and saves a processed CSV file that is ready for analysis or later cloud storage.
+Die Pipeline lädt Rohdaten aus dem Berliner Open-Data-Portal aus einer Excel-Datei, bereinigt und transformiert die Daten, validiert den verarbeiteten Datensatz und speichert eine saubere CSV-Datei, die für Analysen oder spätere Cloud-Speicherung vorbereitet ist.
 
-## Project Goal
+## Projektziel
 
-The goal of this project is to demonstrate core data engineering skills:
+Dieses Projekt zeigt zentrale Fähigkeiten im Bereich Data Engineering:
 
-- Exploratory data analysis
-- ETL pipeline design
-- Data cleaning and reshaping
-- Configuration-driven pipeline execution
+- Explorative Datenanalyse
+- ETL-Pipeline-Design
+- Datenbereinigung und Datenumformung
+- Konfigurationsgesteuerte Pipeline-Ausführung
 - Logging
-- Unit testing
-- Git/GitHub project organization
+- Datenvalidierung
+- Unit Testing
+- GitHub Actions / CI
+- Git/GitHub-Projektorganisation
 
-This project is part of a larger portfolio focused on data engineering and cloud workflows.
+Das Projekt ist Teil eines größeren Portfolios mit Fokus auf Data Engineering und Cloud Workflows.
 
-## Dataset
+## Datensatz
 
-The project uses Berlin bike counter data from the Berlin Open Data portal.
+Das Projekt verwendet Fahrradzähldaten aus dem Berliner Open-Data-Portal.
 
-The raw dataset contains hourly bike counts for multiple counting stations across Berlin. For this version of the project, the pipeline processes the sheet:
+In dieser Version verarbeitet die Pipeline das Tabellenblatt:
 
 ```text
 Jahresdatei 2025
+```
+
+Die Rohdatei wird lokal an folgendem Pfad erwartet:
+
+```text
+data/raw/bike_counts.xlsx
+```
+
+Der Ordner `data/` wird von Git ignoriert und muss lokal erstellt werden.
+
+## Projektstruktur
+
+```text
+berlin-mobility-pipeline/
+├── config/
+│   └── config.yaml
+├── notebooks/
+│   └── eda_bike_counters.ipynb
+├── src/
+│   ├── __init__.py
+│   ├── ingest.py
+│   ├── transform.py
+│   ├── validate.py
+│   ├── load.py
+│   └── main.py
+├── tests/
+│   ├── test_transform.py
+│   └── test_validate.py
+├── .github/
+│   └── workflows/
+│       └── tests.yml
+├── requirements.txt
+└── README.md
+```
+
+## ETL-Pipeline
+
+Die Pipeline folgt einer klassischen ETL-Struktur:
+
+```text
+Rohdaten aus Excel
+      ↓
+Ingest
+      ↓
+Transform
+      ↓
+Validate
+      ↓
+Load
+      ↓
+Verarbeitete CSV-Datei
+```
+
+### Ingest
+
+`src/ingest.py` prüft, ob die Rohdatei existiert, und lädt die Pipeline-Konfiguration.
+
+### Transform
+
+`src/transform.py` enthält die zentrale Transformationslogik:
+
+- Lädt das Tabellenblatt für 2025
+- Benennt die Zeitspalte in `timestamp` um
+- Wandelt Zeitwerte in ein Datetime-Format um
+- Bereinigt Stations-IDs aus unübersichtlichen Excel-Headern
+- Wandelt Fahrradzählwerte in numerische Werte um
+- Transformiert die Daten vom Wide Format ins Long Format
+- Ergänzt nützliche Zeitmerkmale wie `date`, `hour`, `weekday` und `month`
+
+### Validate
+
+`src/validate.py` prüft den verarbeiteten Datensatz, bevor er gespeichert wird.
+
+Die Validierung prüft unter anderem:
+
+- Der verarbeitete Datensatz ist nicht leer
+- Alle erforderlichen Spalten sind vorhanden
+- `timestamp` enthält keine fehlenden Werte
+- `station_id` enthält keine fehlenden Werte
+- `bike_count` enthält keine negativen Werte
+- `hour` liegt zwischen 0 und 23
+- `month` liegt zwischen 1 und 12
+
+### Load
+
+`src/load.py` speichert den verarbeiteten Datensatz als CSV-Datei.
+
+Der aktuelle Output ist:
+
+```text
+data/processed/bike_counts_2025_clean.csv
+```
+
+## Konfiguration
+
+Die Pipeline-Einstellungen werden in folgender Datei gespeichert:
+
+```text
+config/config.yaml
+```
+
+Beispiel:
+
+```yaml
+dataset:
+  raw_file_path: "data/raw/bike_counts.xlsx"
+  sheet_name: "Jahresdatei 2025"
+
+output:
+  processed_path: "data/processed/bike_counts_2025_clean.csv"
+
+logging:
+  level: "INFO"
+```
+
+## Lokale Ausführung
+
+Repository klonen:
+
+```bash
+git clone https://github.com/muhannadnajjar1-hash/berlin-mobility-pipeline.git
+cd berlin-mobility-pipeline
+```
+
+Abhängigkeiten installieren:
+
+```bash
+pip install -r requirements.txt
+```
+
+Lokale Datenordner erstellen:
+
+```bash
+mkdir -p data/raw data/processed
+```
+
+Die Excel-Rohdatei hier ablegen:
+
+```text
+data/raw/bike_counts.xlsx
+```
+
+ETL-Pipeline ausführen:
+
+```bash
+python src/main.py
+```
+
+Erwarteter Output:
+
+```text
+data/processed/bike_counts_2025_clean.csv
+```
+
+## Tests ausführen
+
+Unit Tests lokal ausführen:
+
+```bash
+PYTHONPATH=. pytest
+```
+
+Die Tests prüfen unter anderem:
+
+- Stations-IDs werden korrekt bereinigt
+- Ungültige Zeitstempel werden entfernt
+- Daten werden korrekt vom Wide Format ins Long Format transformiert
+- Die Validierung akzeptiert gültige verarbeitete Daten
+- Die Validierung schlägt bei ungültigen Daten fehl
+
+## Continuous Integration
+
+Dieses Projekt verwendet GitHub Actions, um Unit Tests automatisch bei jedem Push und Pull Request auf den `main`-Branch auszuführen.
+
+Der Workflow ist definiert in:
+
+```text
+.github/workflows/tests.yml
+```
+
+Der Workflow installiert die Projektabhängigkeiten und führt folgenden Befehl aus:
+
+```bash
+PYTHONPATH=. pytest
+```
+
+## Aktuelle Ergebnisse
+
+Der Datensatz für 2025 enthält:
+
+```text
+8.760 stündliche Datensätze
+35 Fahrradzählstationen
+306.600 Zeilen nach der Transformation ins Long Format
+```
+
+Der verarbeitete Output enthält folgende Spalten:
+
+```text
+timestamp, station_id, bike_count, date, hour, weekday, month
+```
+
+## Nächste Schritte
+
+Geplante Erweiterungen:
+
+- Verarbeitete Daten zusätzlich als Parquet speichern
+- Cloud-Speicherung mit AWS S3 integrieren
+- Geplante Pipeline-Ausführungen hinzufügen
+- Architekturdiagramm der Pipeline ergänzen
+- Erweiterte Datenqualitätsprüfungen hinzufügen
