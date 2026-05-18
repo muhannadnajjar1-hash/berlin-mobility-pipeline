@@ -2,7 +2,7 @@
 
 Ein Data-Engineering-Portfolio-Projekt, das eine lokale ETL-Pipeline für Berliner Fahrradzähldaten aufbaut.
 
-Die Pipeline lädt Rohdaten aus dem Berliner Open-Data-Portal aus einer Excel-Datei, bereinigt und transformiert die Daten, validiert den verarbeiteten Datensatz und speichert eine saubere CSV-Datei, die für Analysen oder spätere Cloud-Speicherung vorbereitet ist.
+Die Pipeline lädt Rohdaten aus dem Berliner Open-Data-Portal aus einer Excel-Datei, bereinigt und transformiert die Daten, validiert den verarbeiteten Datensatz und speichert saubere CSV- und Parquet-Dateien, die für Analysen oder spätere Cloud-Speicherung vorbereitet sind.
 
 ## Projektziel
 
@@ -14,7 +14,9 @@ Dieses Projekt zeigt zentrale Fähigkeiten im Bereich Data Engineering:
 - Konfigurationsgesteuerte Pipeline-Ausführung
 - Logging
 - Datenvalidierung
+- Speicherung als CSV und Parquet
 - Unit Testing
+- Ruff Linting
 - GitHub Actions / CI
 - Git/GitHub-Projektorganisation
 
@@ -59,6 +61,7 @@ berlin-mobility-pipeline/
 ├── .github/
 │   └── workflows/
 │       └── tests.yml
+├── pyproject.toml
 ├── requirements.txt
 └── README.md
 ```
@@ -78,8 +81,46 @@ Validate
       ↓
 Load
       ↓
-Verarbeitete CSV-Datei
+Verarbeitete CSV- und Parquet-Dateien
 ```
+
+## Architekturüberblick
+
+```text
+Berliner Open-Data-Excel-Datei
+        ↓
+Ingest
+- Konfiguration laden
+- Rohdatei prüfen
+        ↓
+Transform
+- Zeitstempel bereinigen
+- Stations-IDs bereinigen
+- Wide Format in Long Format umwandeln
+        ↓
+Validate
+- Pflichtspalten prüfen
+- fehlende Werte prüfen
+- Wertebereiche prüfen
+        ↓
+Load
+- CSV für einfache Lesbarkeit speichern
+- Parquet für analytische Workloads speichern
+        ↓
+GitHub Actions
+- Ruff Linting
+- Pytest Unit Tests
+```
+
+## Designentscheidungen
+
+- Die Rohdaten werden nicht in Git versioniert, da Datendateien lokal oder später über Cloud Storage verwaltet werden sollten.
+- Die Pipeline ist konfigurationsgesteuert, damit Dateipfade und Parameter nicht hart im Python-Code kodiert sind.
+- Die Transformationslogik liegt in `src/transform.py`, während das Notebook nur für explorative Analyse verwendet wird.
+- Die Daten werden sowohl als CSV als auch als Parquet gespeichert: CSV ist leicht lesbar, Parquet ist effizienter für analytische Workloads.
+- Die Validierung erfolgt vor dem Speichern, damit fehlerhafte Daten nicht unbemerkt in den Output gelangen.
+- GitHub Actions führt bei jedem Push automatisch Ruff Linting und Unit Tests aus.
+- Die aktuelle Version bleibt lokal und kostenfrei; Cloud Storage ist als mögliche spätere Erweiterung vorgesehen.
 
 ### Ingest
 
@@ -113,12 +154,13 @@ Die Validierung prüft unter anderem:
 
 ### Load
 
-`src/load.py` speichert den verarbeiteten Datensatz als CSV-Datei.
+`src/load.py` speichert den verarbeiteten Datensatz als CSV- und Parquet-Datei.
 
 Der aktuelle Output ist:
 
 ```text
 data/processed/bike_counts_2025_clean.csv
+data/processed/bike_counts_2025_clean.parquet
 ```
 
 ## Konfiguration
@@ -137,7 +179,8 @@ dataset:
   sheet_name: "Jahresdatei 2025"
 
 output:
-  processed_path: "data/processed/bike_counts_2025_clean.csv"
+  processed_csv_path: "data/processed/bike_counts_2025_clean.csv"
+  processed_parquet_path: "data/processed/bike_counts_2025_clean.parquet"
 
 logging:
   level: "INFO"
@@ -180,14 +223,21 @@ Erwarteter Output:
 
 ```text
 data/processed/bike_counts_2025_clean.csv
+data/processed/bike_counts_2025_clean.parquet
 ```
 
-## Tests ausführen
+## Tests und Linting lokal ausführen
 
 Unit Tests lokal ausführen:
 
 ```bash
-PYTHONPATH=. pytest
+pytest
+```
+
+Ruff Linting lokal ausführen:
+
+```bash
+ruff check src tests
 ```
 
 Die Tests prüfen unter anderem:
@@ -200,7 +250,7 @@ Die Tests prüfen unter anderem:
 
 ## Continuous Integration
 
-Dieses Projekt verwendet GitHub Actions, um Unit Tests automatisch bei jedem Push und Pull Request auf den `main`-Branch auszuführen.
+Dieses Projekt verwendet GitHub Actions, um Ruff Linting und Unit Tests automatisch bei jedem Push und Pull Request auf den `main`-Branch auszuführen.
 
 Der Workflow ist definiert in:
 
@@ -208,10 +258,11 @@ Der Workflow ist definiert in:
 .github/workflows/tests.yml
 ```
 
-Der Workflow installiert die Projektabhängigkeiten und führt folgenden Befehl aus:
+Der Workflow installiert die Projektabhängigkeiten und führt folgende Befehle aus:
 
 ```bash
-PYTHONPATH=. pytest
+ruff check src tests
+pytest
 ```
 
 ## Aktuelle Ergebnisse
@@ -234,8 +285,7 @@ timestamp, station_id, bike_count, date, hour, weekday, month
 
 Geplante Erweiterungen:
 
-- Verarbeitete Daten zusätzlich als Parquet speichern
-- Cloud-Speicherung mit AWS S3 integrieren
-- Geplante Pipeline-Ausführungen hinzufügen
 - Architekturdiagramm der Pipeline ergänzen
 - Erweiterte Datenqualitätsprüfungen hinzufügen
+- Optional: Cloud-Speicherung mit AWS S3 oder einem anderen Anbieter integrieren
+- Optional: Geplante Pipeline-Ausführungen hinzufügen
