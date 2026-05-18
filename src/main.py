@@ -1,6 +1,7 @@
 import logging
 
 from ingest import load_config, get_raw_file_path
+from validate import validate_processed_data
 from transform import (
     load_bike_counter_sheet,
     clean_bike_counter_data,
@@ -18,7 +19,7 @@ def main():
     logging.basicConfig(
         level=getattr(logging, config["logging"]["level"]),
         format="%(asctime)s %(levelname)s %(message)s",
-	force=True,
+    force=True,
     )
 
     logging.info("Starting Berlin bike counter ETL pipeline")
@@ -32,6 +33,7 @@ def main():
 
     clean_df = clean_bike_counter_data(raw_df)
     long_df = reshape_to_long_format(clean_df)
+    validate_processed_data (long_df)
 
     save_processed_data(
         long_df,
