@@ -1,8 +1,10 @@
 # Berlin Mobility Pipeline
 
+![Tests](https://github.com/muhannadnajjar1-hash/berlin-mobility-pipeline/actions/workflows/tests.yml/badge.svg)
+
 Ein Data-Engineering-Portfolio-Projekt, das eine lokale ETL-Pipeline für Berliner Fahrradzähldaten aufbaut.
 
-Die Pipeline lädt Rohdaten aus dem Berliner Open-Data-Portal aus einer Excel-Datei, bereinigt und transformiert die Daten, validiert den verarbeiteten Datensatz und speichert saubere CSV- und Parquet-Dateien, die für Analysen oder spätere Cloud-Speicherung vorbereitet sind.
+Die Pipeline lädt Rohdaten aus dem Berliner Open-Data-Portal aus einer Excel-Datei, bereinigt und transformiert die Daten, validiert den verarbeiteten Datensatz und speichert saubere CSV-, Parquet- und SQLite-Outputs, die für Analysen, lokale Abfragen oder spätere Cloud-Speicherung vorbereitet sind.
 
 ## Projektziel
 
@@ -14,7 +16,7 @@ Dieses Projekt zeigt zentrale Fähigkeiten im Bereich Data Engineering:
 - Konfigurationsgesteuerte Pipeline-Ausführung
 - Logging
 - Datenvalidierung
-- Speicherung als CSV und Parquet
+- Speicherung als CSV, Parquet und SQLite
 - Unit Testing
 - Ruff Linting
 - GitHub Actions / CI
@@ -57,7 +59,8 @@ berlin-mobility-pipeline/
 │   └── main.py
 ├── tests/
 │   ├── test_transform.py
-│   └── test_validate.py
+│   ├── test_validate.py
+│   └── test_load.py
 ├── .github/
 │   └── workflows/
 │       └── tests.yml
@@ -81,7 +84,7 @@ Validate
       ↓
 Load
       ↓
-Verarbeitete CSV- und Parquet-Dateien
+Verarbeitete CSV-, Parquet- und SQLite-Outputs
 ```
 
 ## Architekturüberblick
@@ -106,6 +109,7 @@ Validate
 Load
 - CSV für einfache Lesbarkeit speichern
 - Parquet für analytische Workloads speichern
+- SQLite für lokale SQL-Abfragen speichern
         ↓
 GitHub Actions
 - Ruff Linting
@@ -117,7 +121,7 @@ GitHub Actions
 - Die Rohdaten werden nicht in Git versioniert, da Datendateien lokal oder später über Cloud Storage verwaltet werden sollten.
 - Die Pipeline ist konfigurationsgesteuert, damit Dateipfade und Parameter nicht hart im Python-Code kodiert sind.
 - Die Transformationslogik liegt in `src/transform.py`, während das Notebook nur für explorative Analyse verwendet wird.
-- Die Daten werden sowohl als CSV als auch als Parquet gespeichert: CSV ist leicht lesbar, Parquet ist effizienter für analytische Workloads.
+- Die Daten werden als CSV, Parquet und SQLite gespeichert: CSV ist leicht lesbar, Parquet ist effizienter für analytische Workloads und SQLite ermöglicht lokale SQL-Abfragen.
 - Die Validierung erfolgt vor dem Speichern, damit fehlerhafte Daten nicht unbemerkt in den Output gelangen.
 - GitHub Actions führt bei jedem Push automatisch Ruff Linting und Unit Tests aus.
 - Die aktuelle Version bleibt lokal und kostenfrei; Cloud Storage ist als mögliche spätere Erweiterung vorgesehen.
@@ -154,13 +158,14 @@ Die Validierung prüft unter anderem:
 
 ### Load
 
-`src/load.py` speichert den verarbeiteten Datensatz als CSV- und Parquet-Datei.
+`src/load.py` speichert den verarbeiteten Datensatz als CSV-Datei, Parquet-Datei und lokale SQLite-Datenbank.
 
 Der aktuelle Output ist:
 
 ```text
 data/processed/bike_counts_2025_clean.csv
 data/processed/bike_counts_2025_clean.parquet
+data/processed/berlin_mobility.db
 ```
 
 ## Konfiguration
@@ -181,6 +186,10 @@ dataset:
 output:
   processed_csv_path: "data/processed/bike_counts_2025_clean.csv"
   processed_parquet_path: "data/processed/bike_counts_2025_clean.parquet"
+
+database:
+  sqlite_path: "data/processed/berlin_mobility.db"
+  table_name: "bike_counts_2025"
 
 logging:
   level: "INFO"
@@ -224,6 +233,19 @@ Erwarteter Output:
 ```text
 data/processed/bike_counts_2025_clean.csv
 data/processed/bike_counts_2025_clean.parquet
+data/processed/berlin_mobility.db
+```
+
+SQLite-Datenbank optional prüfen:
+
+```bash
+sqlite3 data/processed/berlin_mobility.db
+```
+
+Beispielabfrage:
+
+```sql
+SELECT COUNT(*) FROM bike_counts_2025;
 ```
 
 ## Tests und Linting lokal ausführen
@@ -247,6 +269,7 @@ Die Tests prüfen unter anderem:
 - Daten werden korrekt vom Wide Format ins Long Format transformiert
 - Die Validierung akzeptiert gültige verarbeitete Daten
 - Die Validierung schlägt bei ungültigen Daten fehl
+- Der SQLite-Export erstellt eine abfragbare Tabelle
 
 ## Continuous Integration
 
@@ -281,11 +304,16 @@ Der verarbeitete Output enthält folgende Spalten:
 timestamp, station_id, bike_count, date, hour, weekday, month
 ```
 
+## Visualisierung
+
+Die folgende Grafik zeigt die täglichen Fahrrad-Zählwerte über alle Stationen im Jahr 2025.
+
+![Tägliche Fahrradzählungen 2025](notebooks/daily_bike_counts.png)
+
 ## Nächste Schritte
 
 Geplante Erweiterungen:
 
-- Architekturdiagramm der Pipeline ergänzen
 - Erweiterte Datenqualitätsprüfungen hinzufügen
 - Optional: Cloud-Speicherung mit AWS S3 oder einem anderen Anbieter integrieren
 - Optional: Geplante Pipeline-Ausführungen hinzufügen
