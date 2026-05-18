@@ -1,5 +1,6 @@
-from pathlib import Path
 import logging
+from pathlib import Path
+
 import yaml
 
 
@@ -12,7 +13,7 @@ def load_config(config_path: str) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"Config file not found: {path}")
 
-    with open(path, "r") as file:
+    with open(path) as file:
         config = yaml.safe_load(file)
 
     logging.info("Loaded config from %s", path)
