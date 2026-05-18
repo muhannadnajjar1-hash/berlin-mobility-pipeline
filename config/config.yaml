@@ -6,5 +6,9 @@ output:
   processed_csv_path: "data/processed/bike_counts_2025_clean.csv"
   processed_parquet_path: "data/processed/bike_counts_2025_clean.parquet"
 
+database:
+  sqlite_path: "data/processed/berlin_mobility.db"
+  table_name: "bike_counts_2025"
+
 logging:
   level: "INFO"

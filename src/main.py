@@ -1,7 +1,7 @@
 import logging
 
 from ingest import get_raw_file_path, load_config
-from load import save_processed_csv, save_processed_parquet
+from load import save_processed_csv, save_processed_parquet, save_to_sqlite
 from transform import (
     clean_bike_counter_data,
     load_bike_counter_sheet,
@@ -43,6 +43,11 @@ def main():
     save_processed_parquet(
         long_df,
         config["output"]["processed_parquet_path"],
+    )
+    save_to_sqlite(
+        long_df,
+        config["database"]["sqlite_path"],
+        config["database"]["table_name"],
     )
 
     logging.info("ETL pipeline finished successfully")
