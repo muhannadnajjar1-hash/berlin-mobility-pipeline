@@ -310,10 +310,3 @@ Die folgende Grafik zeigt die täglichen Fahrrad-Zählwerte über alle Stationen
 
 ![Tägliche Fahrradzählungen 2025](notebooks/daily_bike_counts.png)
 
-## Nächste Schritte
-
-Geplante Erweiterungen:
-
-- Erweiterte Datenqualitätsprüfungen hinzufügen
-- Optional: Cloud-Speicherung mit AWS S3 oder einem anderen Anbieter integrieren
-- Optional: Geplante Pipeline-Ausführungen hinzufügen
