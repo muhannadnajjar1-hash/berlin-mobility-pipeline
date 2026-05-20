@@ -222,3 +222,6 @@ anaconda_projects/
 data/
 .DS_Store
 .idea/
+.DS_Store
+.virtual_documents/
+data/processed/
