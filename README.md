@@ -2,165 +2,124 @@
 
 ![Tests](https://github.com/muhannadnajjar1-hash/berlin-mobility-pipeline/actions/workflows/tests.yml/badge.svg)
 
-Ein Data-Engineering-Portfolio-Projekt, das eine lokale ETL-Pipeline für Berliner Fahrradzähldaten aufbaut.
+A local data engineering pipeline for Berlin bike counter data.
 
-Die Pipeline lädt Rohdaten aus dem Berliner Open-Data-Portal aus einer Excel-Datei, bereinigt und transformiert die Daten, validiert den verarbeiteten Datensatz und speichert saubere CSV-, Parquet- und SQLite-Outputs, die für Analysen, lokale Abfragen oder spätere Cloud-Speicherung vorbereitet sind.
+This project is part of my **Berlin Data Engineering Lab** portfolio. It demonstrates how raw Excel data can be ingested, cleaned, validated, transformed, and stored in analysis-ready formats.
 
-## Projektziel
+## Project Purpose
 
-Dieses Projekt zeigt zentrale Fähigkeiten im Bereich Data Engineering:
+The goal of this project is to build a reproducible batch ETL pipeline for real-world Berlin mobility data.
 
-- Explorative Datenanalyse
-- ETL-Pipeline-Design
-- Datenbereinigung und Datenumformung
-- Konfigurationsgesteuerte Pipeline-Ausführung
-- Logging
-- Datenvalidierung
-- Speicherung als CSV, Parquet und SQLite
-- Unit Testing
-- Ruff Linting
-- GitHub Actions / CI
-- Git/GitHub-Projektorganisation
+The pipeline processes raw bike counter data for 2025 and produces clean outputs that can be used for analysis, SQL queries, and downstream projects.
 
-Das Projekt ist Teil eines größeren Portfolios mit Fokus auf Data Engineering und Cloud Workflows.
+This project is the first project in the portfolio and provides the mobility dataset used later by the **Berlin Analytics Warehouse** project.
 
-## Datensatz
+## Portfolio Role
 
-Das Projekt verwendet Fahrradzähldaten aus dem Berliner Open-Data-Portal.
+This project is the foundation of the portfolio data flow:
 
-In dieser Version verarbeitet die Pipeline das Tabellenblatt:
+```text
+Project 1: Berlin Mobility Pipeline
+        ↓ produces bike_counts_2025_clean.parquet
+Project 3: Berlin Analytics Warehouse
+```
+
+The cleaned Parquet output from this project is consumed by the analytics warehouse together with historical weather data from the Berlin Weather Pipeline.
+
+## Data Source
+
+The project uses Berlin bike counter data from the Berlin Open Data portal.
+
+In this version, the pipeline processes the Excel sheet:
 
 ```text
 Jahresdatei 2025
 ```
 
-Die Rohdatei wird lokal an folgendem Pfad erwartet:
+The raw Excel file is expected locally at:
 
 ```text
 data/raw/bike_counts.xlsx
 ```
 
-Der Ordner `data/` wird von Git ignoriert und muss lokal erstellt werden.
+The `data/` folder is ignored by Git because it contains local or generated data files.
 
-## Projektstruktur
+## ETL Pipeline
+
+```text
+Raw Excel file
+      ↓
+Ingest
+      ↓
+Transform
+      ↓
+Validate
+      ↓
+Load
+      ↓
+CSV / Parquet / SQLite outputs
+```
+
+## Architecture
+
+1. Load the project configuration.
+2. Check that the raw Excel file exists locally.
+3. Read the 2025 bike counter sheet.
+4. Clean timestamps and station headers.
+5. Transform the data from wide format to long format.
+6. Validate the processed dataset.
+7. Store the clean data as CSV, Parquet, and SQLite.
+8. Run tests and linting through GitHub Actions.
+
+## Project Structure
 
 ```text
 berlin-mobility-pipeline/
-├── config/
-│   └── config.yaml
-├── notebooks/
-│   └── eda_bike_counters.ipynb
-├── src/
-│   ├── __init__.py
-│   ├── ingest.py
-│   ├── transform.py
-│   ├── validate.py
-│   ├── load.py
-│   └── main.py
-├── tests/
-│   ├── test_transform.py
-│   ├── test_validate.py
-│   └── test_load.py
-├── .github/
-│   └── workflows/
-│       └── tests.yml
-├── pyproject.toml
-├── requirements.txt
-└── README.md
+├── .github/workflows/     # GitHub Actions CI
+├── config/                # Pipeline configuration
+├── notebooks/             # Exploratory analysis notebook and figure
+├── src/                   # ETL pipeline source code
+├── tests/                 # Unit tests
+├── README.md              # Project documentation
+├── requirements.txt       # Python dependencies
+├── pyproject.toml         # Tool configuration
+└── .gitignore
 ```
 
-## ETL-Pipeline
-
-Die Pipeline folgt einer klassischen ETL-Struktur:
-
-```text
-Rohdaten aus Excel
-      ↓
-Ingest
-      ↓
-Transform
-      ↓
-Validate
-      ↓
-Load
-      ↓
-Verarbeitete CSV-, Parquet- und SQLite-Outputs
-```
-
-## Architekturüberblick
-
-```text
-Berliner Open-Data-Excel-Datei
-        ↓
-Ingest
-- Konfiguration laden
-- Rohdatei prüfen
-        ↓
-Transform
-- Zeitstempel bereinigen
-- Stations-IDs bereinigen
-- Wide Format in Long Format umwandeln
-        ↓
-Validate
-- Pflichtspalten prüfen
-- fehlende Werte prüfen
-- Wertebereiche prüfen
-        ↓
-Load
-- CSV für einfache Lesbarkeit speichern
-- Parquet für analytische Workloads speichern
-- SQLite für lokale SQL-Abfragen speichern
-        ↓
-GitHub Actions
-- Ruff Linting
-- Pytest Unit Tests
-```
-
-## Designentscheidungen
-
-- Die Rohdaten werden nicht in Git versioniert, da Datendateien lokal oder später über Cloud Storage verwaltet werden sollten.
-- Die Pipeline ist konfigurationsgesteuert, damit Dateipfade und Parameter nicht hart im Python-Code kodiert sind.
-- Die Transformationslogik liegt in `src/transform.py`, während das Notebook nur für explorative Analyse verwendet wird.
-- Die Daten werden als CSV, Parquet und SQLite gespeichert: CSV ist leicht lesbar, Parquet ist effizienter für analytische Workloads und SQLite ermöglicht lokale SQL-Abfragen.
-- Die Validierung erfolgt vor dem Speichern, damit fehlerhafte Daten nicht unbemerkt in den Output gelangen.
-- GitHub Actions führt bei jedem Push automatisch Ruff Linting und Unit Tests aus.
-- Die aktuelle Version bleibt lokal und kostenfrei; Cloud Storage ist als mögliche spätere Erweiterung vorgesehen.
+## Main Pipeline Components
 
 ### Ingest
 
-`src/ingest.py` prüft, ob die Rohdatei existiert, und lädt die Pipeline-Konfiguration.
+`src/ingest.py` loads the configuration and checks whether the raw input file exists.
 
 ### Transform
 
-`src/transform.py` enthält die zentrale Transformationslogik:
+`src/transform.py` contains the main transformation logic:
 
-- Lädt das Tabellenblatt für 2025
-- Benennt die Zeitspalte in `timestamp` um
-- Wandelt Zeitwerte in ein Datetime-Format um
-- Bereinigt Stations-IDs aus unübersichtlichen Excel-Headern
-- Wandelt Fahrradzählwerte in numerische Werte um
-- Transformiert die Daten vom Wide Format ins Long Format
-- Ergänzt nützliche Zeitmerkmale wie `date`, `hour`, `weekday` und `month`
+- reads the 2025 Excel sheet
+- cleans timestamp values
+- cleans station names from messy Excel headers
+- converts bike count values to numeric format
+- transforms the data from wide format to long format
+- creates useful date features such as `date`, `hour`, `weekday`, and `month`
 
 ### Validate
 
-`src/validate.py` prüft den verarbeiteten Datensatz, bevor er gespeichert wird.
+`src/validate.py` checks the processed dataset before it is saved.
 
-Die Validierung prüft unter anderem:
+Validation checks include:
 
-- Der verarbeitete Datensatz ist nicht leer
-- Alle erforderlichen Spalten sind vorhanden
-- `timestamp` enthält keine fehlenden Werte
-- `station_id` enthält keine fehlenden Werte
-- `bike_count` enthält keine negativen Werte
-- `hour` liegt zwischen 0 und 23
-- `month` liegt zwischen 1 und 12
+- dataset is not empty
+- required columns are present
+- timestamps are not missing
+- station IDs are not missing
+- bike counts are not negative
+- hour values are between 0 and 23
+- month values are between 1 and 12
 
 ### Load
 
-`src/load.py` speichert den verarbeiteten Datensatz als CSV-Datei, Parquet-Datei und lokale SQLite-Datenbank.
-
-Der aktuelle Output ist:
+`src/load.py` stores the validated dataset as:
 
 ```text
 data/processed/bike_counts_2025_clean.csv
@@ -168,15 +127,15 @@ data/processed/bike_counts_2025_clean.parquet
 data/processed/berlin_mobility.db
 ```
 
-## Konfiguration
+## Configuration
 
-Die Pipeline-Einstellungen werden in folgender Datei gespeichert:
+Pipeline settings are stored in:
 
 ```text
 config/config.yaml
 ```
 
-Beispiel:
+Example:
 
 ```yaml
 dataset:
@@ -195,40 +154,42 @@ logging:
   level: "INFO"
 ```
 
-## Lokale Ausführung
+## Local Setup
 
-Repository klonen:
+Clone the repository:
 
 ```bash
 git clone https://github.com/muhannadnajjar1-hash/berlin-mobility-pipeline.git
 cd berlin-mobility-pipeline
 ```
 
-Abhängigkeiten installieren:
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Lokale Datenordner erstellen:
+Create local data folders:
 
 ```bash
 mkdir -p data/raw data/processed
 ```
 
-Die Excel-Rohdatei hier ablegen:
+Place the raw Excel file here:
 
 ```text
 data/raw/bike_counts.xlsx
 ```
 
-ETL-Pipeline ausführen:
+## Run the Pipeline
+
+Run the full ETL pipeline:
 
 ```bash
 python src/main.py
 ```
 
-Erwarteter Output:
+Expected outputs:
 
 ```text
 data/processed/bike_counts_2025_clean.csv
@@ -236,77 +197,114 @@ data/processed/bike_counts_2025_clean.parquet
 data/processed/berlin_mobility.db
 ```
 
-SQLite-Datenbank optional prüfen:
+Optional SQLite check:
 
 ```bash
 sqlite3 data/processed/berlin_mobility.db
 ```
 
-Beispielabfrage:
+Example query:
 
 ```sql
 SELECT COUNT(*) FROM bike_counts_2025;
 ```
 
-## Tests und Linting lokal ausführen
+## Current Results
 
-Unit Tests lokal ausführen:
-
-```bash
-pytest
-```
-
-Ruff Linting lokal ausführen:
-
-```bash
-ruff check src tests
-```
-
-Die Tests prüfen unter anderem:
-
-- Stations-IDs werden korrekt bereinigt
-- Ungültige Zeitstempel werden entfernt
-- Daten werden korrekt vom Wide Format ins Long Format transformiert
-- Die Validierung akzeptiert gültige verarbeitete Daten
-- Die Validierung schlägt bei ungültigen Daten fehl
-- Der SQLite-Export erstellt eine abfragbare Tabelle
-
-## Continuous Integration
-
-Dieses Projekt verwendet GitHub Actions, um Ruff Linting und Unit Tests automatisch bei jedem Push und Pull Request auf den `main`-Branch auszuführen.
-
-Der Workflow ist definiert in:
+A successful local pipeline run creates:
 
 ```text
-.github/workflows/tests.yml
+8,760 hourly timestamps
+35 bike counting stations
+306,600 rows after transformation to long format
 ```
 
-Der Workflow installiert die Projektabhängigkeiten und führt folgende Befehle aus:
-
-```bash
-ruff check src tests
-pytest
-```
-
-## Aktuelle Ergebnisse
-
-Der Datensatz für 2025 enthält:
-
-```text
-8.760 stündliche Datensätze
-35 Fahrradzählstationen
-306.600 Zeilen nach der Transformation ins Long Format
-```
-
-Der verarbeitete Output enthält folgende Spalten:
+The processed dataset contains the following columns:
 
 ```text
 timestamp, station_id, bike_count, date, hour, weekday, month
 ```
 
-## Visualisierung
+## Visualization
 
-Die folgende Grafik zeigt die täglichen Fahrrad-Zählwerte über alle Stationen im Jahr 2025.
+The following chart shows daily bike counts across all stations for 2025.
 
-![Tägliche Fahrradzählungen 2025](notebooks/daily_bike_counts.png)
+![Daily bike counts 2025](notebooks/daily_bike_counts.png)
 
+## Quality Checks
+
+Run unit tests:
+
+```bash
+pytest
+```
+
+Run Ruff linting:
+
+```bash
+ruff check src tests
+```
+
+The tests check that:
+
+- station IDs are cleaned correctly
+- invalid timestamps are handled
+- data is transformed correctly from wide to long format
+- valid processed data passes validation
+- invalid processed data fails validation
+- SQLite export creates a queryable table
+
+## Continuous Integration
+
+This project uses GitHub Actions to run Ruff linting and unit tests automatically on every push and pull request to the `main` branch.
+
+The workflow is defined in:
+
+```text
+.github/workflows/tests.yml
+```
+
+The workflow runs:
+
+```bash
+ruff check src tests
+pytest
+```
+
+## Design Decisions
+
+- Raw data is not committed to Git because it is a local/generated data asset.
+- The pipeline is configuration-driven so file paths and settings are not hard-coded in the main code.
+- Transformation logic is implemented in `src/transform.py`; notebooks are used only for exploration.
+- The processed data is stored in CSV, Parquet, and SQLite to demonstrate multiple storage formats.
+- Validation runs before loading so invalid data is not written silently.
+- GitHub Actions checks code quality and tests automatically.
+- The project stays local and free at this stage, with cloud storage as a possible later extension.
+
+## Current Limitations
+
+- The raw Excel file must be downloaded manually and placed in `data/raw/`.
+- The visualization is currently stored under `notebooks/`; a future cleanup could move final figures to `reports/figures/`.
+- The pipeline is currently a local batch pipeline and is not scheduled automatically.
+
+## Future Improvements
+
+- Move final figures to `reports/figures/`.
+- Add a small data dictionary for the processed output columns.
+- Add a script for regenerating figures from the processed data.
+- Add scheduled execution or cloud storage in a later version.
+- Connect this pipeline more explicitly with downstream warehouse and API projects.
+
+## Portfolio Context
+
+This is the first project in my Berlin Data Engineering Lab portfolio.
+
+```text
+Project 1: Berlin Mobility Pipeline
+        ↓
+Project 2: Berlin Weather Pipeline
+        ↓
+Project 3: Berlin Analytics Warehouse
+```
+
+Together, these projects show a progression from raw data ingestion and cleaning to API ingestion and analytical data modeling.
